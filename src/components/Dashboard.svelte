@@ -19,7 +19,7 @@
     {:else if playerData}
         <!-- Ratings section -->
         <div class="ratings">
-            <h3>Your Ratings</h3>
+            <h3>Your Ratings per gamemode</h3>
 
             <!-- Three rating types rendered dynamically -->
             <div class="rating-grid">
@@ -268,4 +268,3 @@
   .tooltiptext.blitz { background-color: #f1c40f; }
   .tooltiptext.bullet { background-color: #e74c3c; }
 </style>
-

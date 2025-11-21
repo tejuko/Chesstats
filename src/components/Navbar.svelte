@@ -20,6 +20,21 @@
 
 </script>
 
+<nav>
+    <button type="button" class="logo" on:click={goHome} aria-label="Go to homepage">
+        <img src="/logo1.png" alt="logo van chesstats.com" />
+        <span>Chesstats.com</span>
+    </button>
+
+    <!-- Navigation Links -->
+    <div class="nav-links">
+        <a href="https://www.chess.com/play">♔ Play a game!</a>
+        {#if username}
+            <button on:click={logout}>Logout</button>
+        {/if}
+    </div>
+</nav>
+
 <style>
     nav {
         display: flex;
@@ -111,18 +126,3 @@
     }
 
 </style>
-
-<nav>
-    <button type="button" class="logo" on:click={goHome} aria-label="Go to homepage">
-        <img src="/logo1.png" alt="logo van chesstats.com" />
-        <span>Chesstats.com</span>
-    </button>
-
-    <!-- Navigation Links -->
-    <div class="nav-links">
-        <a href="https://www.chess.com/play">♔ Play a game!</a>
-        {#if username}
-            <button on:click={logout}>Logout</button>
-        {/if}
-    </div>
-</nav>
