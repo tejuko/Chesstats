@@ -1,9 +1,0 @@
-/* Make sure html and body fill the viewport for proper centering */
-html, body {
-    background-color: burlywood;
-    height: 100%;
-    margin: 0;
-    padding: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-/* Center content vertically and horizontally */
