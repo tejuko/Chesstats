@@ -1,5 +1,5 @@
 <script>
-    import Header from '../../components/Header.svelte';
+    import Navbar from '../../components/Navbar.svelte';
     import Dashboard from '../../components/Dashboard.svelte';
     import ChessChart from '../../components/ChessChart.svelte';
     import Leaderboard from '../../components/Leaderboard.svelte';
@@ -79,7 +79,7 @@
     <meta name="description" content="View your chess statistics on Chesstats.com." />
 </svelte:head>
 
-<Header />
+<Navbar />
 
 <div class="welcome-wrapper">
     <div class="welcome-header">

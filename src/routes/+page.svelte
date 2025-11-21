@@ -1,5 +1,5 @@
 <script>
-    import Header from '../components/Header.svelte';
+    import Navbar from '../components/Navbar.svelte';
     import { goto } from '$app/navigation';
 
     let username = '';
@@ -43,7 +43,7 @@
     <meta name="description" content="Login to Chesstats.com to view your chess statistics." />
 </svelte:head>
 
-<Header />
+<Navbar />
 
 <div class="page-container">
     <div class="login-card">
