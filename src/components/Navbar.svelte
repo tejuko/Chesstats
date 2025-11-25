@@ -1,34 +1,41 @@
 <script>
-    import { goto } from '$app/navigation';
-    import { onMount } from 'svelte';
+    import { goto } from '$app/navigation'; // SvelteKit navigation helper
+    import { onMount } from 'svelte';      // Lifecycle hook
 
-    let username = '';
+    let username = ''; // Local state to track logged-in user
 
+    // Run once when component mounts
     onMount(() => {
+        // Retrieve saved username from localStorage (if user is logged in)
         username = localStorage.getItem('username');
     });
 
+    // Logout function
     function logout() {
-        localStorage.removeItem('username');
-        username = '';
-        goto('/');
+        localStorage.removeItem('username'); // Remove username from localStorage
+        username = '';                        // Reset local state
+        goto('/');                            // Redirect to homepage
     }
 
+    // Navigate to homepage
     function goHome() {
-        goto('/');
+        goto('/'); // Programmatic navigation using SvelteKit
     }
-
 </script>
 
 <nav>
+    <!-- Logo / Home button -->
     <button type="button" class="logo" on:click={goHome} aria-label="Go to homepage">
         <img src="/logo1.png" alt="logo van chesstats.com" />
         <span>Chesstats.com</span>
     </button>
 
-    <!-- Navigation Links -->
+    <!-- Navigation links -->
     <div class="nav-links">
+        <!-- External link to Chess.com to play a game -->
         <a href="https://www.chess.com/play">♔ Play a game!</a>
+
+        <!-- Conditionally show Logout button if user is logged in -->
         {#if username}
             <button on:click={logout}>Logout</button>
         {/if}

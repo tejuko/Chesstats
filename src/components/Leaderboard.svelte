@@ -1,10 +1,12 @@
 <script>
-    export let leaderboardData = null;
-    export let username = '';
-    export let initialTab = 'live_blitz';
+    // Props passed from parent component
+    export let leaderboardData = null; // Object containing leaderboard info for each mode
+    export let username = '';          // Logged-in user's username
+    export let initialTab = 'live_blitz'; // Default tab to display
 
-    let activeTab = initialTab;
+    let activeTab = initialTab; // Currently selected tab (Reactive)
 
+    // Define the leaderboard tabs (Rapid, Blitz, Bullet)
     const tabs = [
         { key: 'live_rapid', label: 'Rapid' },
         { key: 'live_blitz', label: 'Blitz' },
@@ -15,22 +17,23 @@
 <div class="leaderboard">
     <h2>Chess.com Leaderboard</h2>
 
+    <!-- Show loading state if leaderboard data hasn't loaded yet -->
     {#if !leaderboardData}
         <p class="loading">Loading leaderboard...</p>
     {:else}
-        <!-- Tabs -->
+        <!-- Tabs for switching between Rapid, Blitz, Bullet -->
         <div class="tabs">
             {#each tabs as tab}
                 <button
                     class:active-tab={activeTab === tab.key}
                     on:click={() => activeTab = tab.key}
-                >
+                    >
                     {tab.label}
                 </button>
             {/each}
         </div>
 
-        <!-- Leaderboard -->
+        <!-- Leaderboard Table -->
         <table>
             <thead>
                 <tr>
@@ -40,31 +43,34 @@
                 </tr>
             </thead>
             <tbody>
+                <!-- Top 10 players in the selected tab -->
                 {#each leaderboardData[activeTab].slice(0, 10) as player, index}
                     <tr class:highlight={player.username.toLowerCase() === username.toLowerCase()}>
+                        <!-- Highlight the row if it matches the logged-in user -->
                         <td>{index + 1}</td>
                         <td>{player.username}</td>
                         <td>{player.score}</td>
                     </tr>
                 {/each}
 
-                <!-- If user is outside top 10 -->
+                <!-- If user is not in top 10, show their rank separately -->
                 {#if !leaderboardData[activeTab].slice(0, 10).some(p => p.username.toLowerCase() === username.toLowerCase())}
                     {#each leaderboardData[activeTab] as player, idx (player.username)}
                         {#if player.username.toLowerCase() === username.toLowerCase()}
                             <tr class="highlight">
-                                <td>{idx + 1}</td>
+                                <td>{idx + 1}</td>       <!-- User's actual rank -->
                                 <td>{player.username}</td>
                                 <td>{player.score}</td>
                             </tr>
                         {/if}
                     {/each}
 
+                    <!-- If user is not on the leaderboard at all -->
                    {#if !leaderboardData[activeTab].some(p => p.username.toLowerCase() === username.toLowerCase())}
                         <tr class="highlight">
-                            <td>99+</td>
+                            <td>99+</td>             <!-- Unknown rank -->
                             <td>{username}</td>
-                            <td>N/A</td>
+                            <td>N/A</td>             <!-- No score available -->
                         </tr>
                     {/if}
                 {/if}

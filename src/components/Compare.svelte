@@ -1,38 +1,41 @@
 <script>
-    import { onMount, afterUpdate } from "svelte";
-    import * as d3 from "d3";
+    import { onMount, afterUpdate } from "svelte"; // Lifecycle hooks
+    import * as d3 from "d3"; // D3.js for charting
 
     export let username = ""; // Logged-in user's username
 
-    let friend = "";
-    let myStats = null;
-    let myProfile = null;
-    let friendStats = null;
-    let friendProfile = null;
+    // State variables
+    let friend = "";          // Friend's username to compare
+    let myStats = null;       // Logged-in user's stats
+    let myProfile = null;     // Logged-in user's profile
+    let friendStats = null;   // Friend's stats
+    let friendProfile = null; // Friend's profile
 
-    let loadingMyProfile = false;
-    let loadingFriend = false;
-    let error = "";
+    let loadingMyProfile = false; // Flag for loading user profile
+    let loadingFriend = false;    // Flag for loading friend profile
+    let error = "";               // Error message
 
-    let chartContainer;
+    let chartContainer; // DOM reference for the D3 chart
 
-    const YOU_COLOR = "#69923e";    // green
-    const FRIEND_COLOR = "#c0392b"; // red
+    const YOU_COLOR = "#69923e";    // Green for user
+    const FRIEND_COLOR = "#c0392b"; // Red for friend
 
-    // Helper to format unix timestamp -> readable date
+    // Format Unix timestamp into readable date
     function formatDate(ts) {
         if (!ts) return "N/A";
         const d = new Date(ts * 1000);
         return d.toLocaleDateString();
     }
 
+    // Determine bar/text color based on comparison
     function getColor(myRating, friendRating, isMy) {
-        if (myRating == null || friendRating == null) return "#666"; // Neutral if data missing
-        if (myRating > friendRating) return isMy ? "#69923e" : "#c0392b"; // Higher: green, lower: red
-        if (myRating < friendRating) return isMy ? "#c0392b" : "#69923e";
-        return "#666"; // Equal: neutral gray
+        if (myRating == null || friendRating == null) return "#666"; // Neutral gray if missing
+        if (myRating > friendRating) return isMy ? YOU_COLOR : FRIEND_COLOR;
+        if (myRating < friendRating) return isMy ? FRIEND_COLOR : YOU_COLOR;
+        return "#666"; // Equal ratings
     }
 
+    // Fetch profile and stats from Chess.com API
     async function fetchProfileAndStats(user) {
         const result = { profile: null, stats: null, error: "" };
         const uname = user.trim().toLowerCase();
@@ -42,21 +45,13 @@
         }
 
         try {
-            // Fetch profile
             const pRes = await fetch(`https://api.chess.com/pub/player/${uname}`);
-            if (pRes.ok) {
-                result.profile = await pRes.json();
-            } else {
-                result.error += `Profile "${uname}" not found. `;
-            }
+            if (pRes.ok) result.profile = await pRes.json();
+            else result.error += `Profile "${uname}" not found. `;
 
-            // Fetch stats
             const sRes = await fetch(`https://api.chess.com/pub/player/${uname}/stats`);
-            if (sRes.ok) {
-                result.stats = await sRes.json();
-            } else {
-                result.error += "Stats not found.";
-            }
+            if (sRes.ok) result.stats = await sRes.json();
+            else result.error += "Stats not found.";
         } catch (err) {
             console.error(`Failed to fetch ${uname}:`, err);
             result.error = "Failed to fetch data. Check your connection or try again.";
@@ -65,6 +60,7 @@
         return result;
     }
 
+    // Load logged-in user's profile
     async function loadMyProfile() {
         if (!username) return;
         loadingMyProfile = true;
@@ -76,12 +72,11 @@
         if (err) error = `Your profile: ${err}`;
     }
 
-    onMount(loadMyProfile);
+    onMount(loadMyProfile); // Load on component mount
 
-    $: if (username) {
-        loadMyProfile();
-    }
+    $: if (username) loadMyProfile(); // Reactive reload when username changes
 
+    // Compare logged-in user vs friend
     async function compare() {
         if (!friend) {
             error = "Enter a friend's username to compare.";
@@ -98,7 +93,6 @@
         friendStats = stats;
 
         if (err) error = err;
-
         loadingFriend = false;
     }
 
@@ -122,44 +116,31 @@
     });
 
     function drawChart() {
-        if (!myStats || !friendStats) return; // Skip if stats are missing
+        if (!myStats || !friendStats) return;
         chartContainer.innerHTML = "";
 
         const data = [
             { mode: "Rapid", my: rating(myStats, "chess_rapid"), friend: rating(friendStats, "chess_rapid") },
             { mode: "Blitz", my: rating(myStats, "chess_blitz"), friend: rating(friendStats, "chess_blitz") },
             { mode: "Bullet", my: rating(myStats, "chess_bullet"), friend: rating(friendStats, "chess_bullet") }
-        ].filter(d => d.my !== null || d.friend !== null); // Skip modes with no ratings
+        ].filter(d => d.my !== null || d.friend !== null);
 
-        if (data.length === 0) return; // No data to chart
+        if (data.length === 0) return;
 
-        const width = 520;
-        const height = 260;
-        const margin = { top: 20, right: 20, bottom: 40, left: 40 };
+        const width = 520, height = 260, margin = { top: 20, right: 20, bottom: 40, left: 40 };
 
         const svg = d3.select(chartContainer)
             .append("svg")
             .attr("width", width)
             .attr("height", height);
 
-        const x0 = d3.scaleBand()
-            .domain(data.map(d => d.mode))
-            .range([margin.left, width - margin.right])
-            .padding(0.3);
-
-        const x1 = d3.scaleBand()
-            .domain(["my", "friend"])
-            .range([0, x0.bandwidth()])
-            .padding(0.15);
-
+        const x0 = d3.scaleBand().domain(data.map(d => d.mode)).range([margin.left, width - margin.right]).padding(0.3);
+        const x1 = d3.scaleBand().domain(["my", "friend"]).range([0, x0.bandwidth()]).padding(0.15);
         const y = d3.scaleLinear()
-            .domain([0, d3.max(data.flatMap(d => [d.my, d.friend].filter(v => v !== null))) || 1500]) // Fallback to 1500 if all null
+            .domain([0, d3.max(data.flatMap(d => [d.my, d.friend].filter(v => v !== null))) || 1500])
             .nice()
             .range([height - margin.bottom, margin.top]);
-
-        const color = d3.scaleOrdinal()
-            .domain(["my", "friend"])
-            .range([YOU_COLOR, FRIEND_COLOR]);
+        const color = d3.scaleOrdinal().domain(["my", "friend"]).range([YOU_COLOR, FRIEND_COLOR]);
 
         svg.append("g")
             .selectAll("g")
@@ -178,47 +159,46 @@
             .attr("fill", d => color(d.key))
             .transition()
             .duration(600)
-            .attr("y", d => d.value !== null ? y(d.value) : height - margin.bottom) // Don't draw if null
+            .attr("y", d => d.value !== null ? y(d.value) : height - margin.bottom)
             .attr("height", d => d.value !== null ? height - margin.bottom - y(d.value) : 0);
 
-        // X axis
-        svg.append("g")
-            .attr("transform", `translate(0,${height - margin.bottom})`)
-            .call(d3.axisBottom(x0));
-
-        // Y axis
-        svg.append("g")
-            .attr("transform", `translate(${margin.left},0)`)
-            .call(d3.axisLeft(y));
+        svg.append("g").attr("transform", `translate(0,${height - margin.bottom})`).call(d3.axisBottom(x0));
+        svg.append("g").attr("transform", `translate(${margin.left},0)`).call(d3.axisLeft(y));
     }
 </script>
 
 <div class="compare-card">
     <h2>Compare Your Stats With a Friend</h2>
 
+    <!-- Loading indicator for user's profile -->
     {#if loadingMyProfile}
         <p class="loading">Loading your profile...</p>
     {/if}
 
+    <!-- Input field for friend's username and Compare button -->
     <div class="input-row">
         <input
             placeholder="friend's username..."
-            bind:value={friend}
+            bind:value={friend} 
             on:keydown={(e) => e.key === 'Enter' && compare()}
         />
         <button on:click={compare} disabled={loadingFriend}>Compare</button>
     </div>
 
+    <!-- Loading indicator for friend's profile -->
     {#if loadingFriend}
         <p class="loading">Loading friend's data...</p>
     {/if}
 
+    <!-- Display any errors -->
     {#if error}
         <p class="error">{error}</p>
     {/if}
 
+    <!-- Display both profiles if loaded -->
     {#if myProfile && friendProfile}
     <div class="profiles">
+        <!-- User profile card -->
         <div class="profile-card">
             <img class="avatar" src={myProfile?.avatar ?? '/default-avatar.png'} alt="Your avatar" />
             <div class="profile-info">
@@ -228,6 +208,7 @@
             </div>
         </div>
 
+        <!-- Friend profile card -->
         <div class="profile-card">
             <img class="avatar" src={friendProfile?.avatar ?? '/default-avatar.png'} alt="Friend avatar" />
             <div class="profile-info">
@@ -238,9 +219,9 @@
         </div>
     </div>
 
-    <!-- Rating Cards -->
+    <!-- Rating cards for each chess mode -->
     <div class="cards">
-        {#each ["chess_rapid","chess_blitz","chess_bullet"] as key, i}
+        {#each ["chess_rapid","chess_blitz","chess_bullet"] as key}
             {@const myRating = rating(myStats, key)}
             {@const friendRating = rating(friendStats, key)}
             <div class="rating-card">
@@ -248,16 +229,19 @@
                     {key === "chess_rapid" ? "⏳ Rapid" : key === "chess_blitz" ? "⚡ Blitz" : "🔫 Bullet"}
                 </div>
                 <div class="values">
+                    <!-- User rating -->
                     <div class="player">
                         <div class="label">You</div>
                         <div class="value" style="color: {getColor(myRating, friendRating, true)}">{myRating ?? "Unrated"}</div>
                     </div>
                     <div class="vs">vs</div>
+                    <!-- Friend rating -->
                     <div class="player friend">
                         <div class="label">Friend</div>
                         <div class="value" style="color: {getColor(myRating, friendRating, false)}">{friendRating ?? "Unrated"}</div>
                     </div>
                 </div>
+                <!-- Rating difference badge -->
                 <div class="difference {diffClass(myRating, friendRating)}">
                     {#if myRating != null && friendRating != null}
                         {diffText(myRating, friendRating)}
@@ -269,7 +253,7 @@
         {/each}
     </div>
 
-    <!-- Bar Chart -->
+    <!-- D3 Bar Chart showing ratings comparison -->
     <div class="chart-card">
         <h3>Rating Comparison</h3>
         <div bind:this={chartContainer} class="chart"></div>
